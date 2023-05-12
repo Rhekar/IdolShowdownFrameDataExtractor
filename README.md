@@ -1,7 +1,7 @@
 # IdolShowdownFrameDataExtractor
 
 ## Usage
-Extract assets with something like AssetRipper. Required folders are AnimationClip, Sprite, Texture2D
+Extract assets with something like AssetRipper. Required folders are AnimationClip, Sprite, Texture2D. Place folders in the same folder as the .py files.
 
 Generate GUID Maps with GenerateGUIDMap.py. Files are included from the base version but will need to be updated once the game is patched.
 
