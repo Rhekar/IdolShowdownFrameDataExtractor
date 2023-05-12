@@ -51,9 +51,11 @@ class Sequence:
     def __init__(self):
         self.frames = defaultdict(Frame)
         # on Frame X hitbox Y is active if true
+        self.chara = ""
         self.activeHitboxes = defaultdict(lambda: defaultdict(float))
         self.activeHurtboxes = defaultdict(lambda: defaultdict(float))
         self.fps = 60.0
+        self.name = ""
         return
         
 
@@ -70,6 +72,8 @@ def loadSpriteData(data, seq):
     
 def loadBoxData(data, seq):
     boxPosData = data["AnimationClip"]["m_PositionCurves"]
+    if len(boxPosData) == 0:
+        raise ValueError("No boxes")
     for pos in boxPosData:
         isHitbox = hitboxRe.match(pos["path"])
         isHurtbox = hurtboxRe.match(pos["path"])
@@ -191,6 +195,7 @@ def genBoxes(seq, f, currentHitboxes, currentHurtboxes, renderHitboxes, renderHu
             renderHitboxes[i] = genBox(currentHitboxes[i].pos, currentHitboxes[i].scale, frameObj.spriteOffset, imgsize)
     for i, active in enumerate(activeHurtboxes):
         if active:
+            #print(i, currentHurtboxes)
             renderHurtboxes[i] = genBox(currentHurtboxes[i].pos, currentHurtboxes[i].scale, frameObj.spriteOffset, imgsize)
 def renderFrame(seq, f, currentHitboxes, currentHurtboxes, renderHitboxes, renderHurtboxes, activeHitboxes, activeHurtboxes, baseimg):
     # Todo: gen in place later
@@ -205,7 +210,7 @@ def renderFrame(seq, f, currentHitboxes, currentHurtboxes, renderHitboxes, rende
             hurtimg1 = ImageDraw.Draw(hurtimg)
             hurtimg1.rectangle(renderHurtboxes[i], fill ="#4cff4c4c", outline ="#4cff4cff")
             baseimg = Image.alpha_composite(baseimg,hurtimg)
-    baseimg.save(os.path.join("SpriteRipHitboxes", f"{spriteGuids[seq.frames[f].spriteGuid]['file']}_f{f}.png"))
+    baseimg.save(os.path.join("SpriteRipHitboxes", f"{seq.name}_f{f}.png"))
 
 def padImg(seq, f, baseimg, currentHitboxes, currentHurtboxes, activeHitboxes, activeHurtboxes, imgsize):
     frameObj = seq.frames[f]
@@ -232,19 +237,34 @@ def padImg(seq, f, baseimg, currentHitboxes, currentHurtboxes, activeHitboxes, a
     r = 0 if r == imgsize[0] else math.floor(r-imgsize[0]+16.5)
     b = 0 if b == imgsize[1] else math.floor(b-imgsize[1]+16.5)
     #print(l,t,r-imgsize[0],b-imgsize[1])
-    print(l,t,r,b)
+    #print(l,t,r,b)
     return add_margin(baseimg, t, r, b, l, (0, 19, 19, 0))
+    
+def loadBaseHurtboxes(chara):
+    #todo: autoload
+    if chara == "aki":
+        return [Box(Vec3(0,0,0), Vec3(1,1,1)),Box(Vec3(0.2171,-0.3205,0), Vec3(0.2477567,0.6513531,1)),Box(Vec3(0,0,0), Vec3(1,1,1)),Box(Vec3(0,0,0), Vec3(1,1,1)),Box(Vec3(0,0,0), Vec3(1,1,1))]
+    if chara == "ayame":
+        return [Box(Vec3(0,-.18,0), Vec3(.35,1,1)),
+                Box(Vec3(-0.0305,-0.4241,0), Vec3(0.5904897,0.4292778,1)),
+                Box(Vec3(-0.182,-0.501,0), Vec3(0.1072033,0.2830588,1)),
+                Box(Vec3(0,0,0), Vec3(1,1,1)),
+                Box(Vec3(0,0,0), Vec3(1,1,1))]
+    if chara == "fubuki":
+        return [Box(Vec3(0,0,0), Vec3(1,1,1)),Box(Vec3(0.2171,-0.3205,0), Vec3(0.2477567,0.6513531,1)),Box(Vec3(0,0,0), Vec3(1,1,1)),Box(Vec3(0,0,0), Vec3(1,1,1)),Box(Vec3(0,0,0), Vec3(1,1,1))]
+    
+    return [Box(Vec3(0,0,0), Vec3(1,1,1)),Box(Vec3(0,0,0), Vec3(1,1,1)),Box(Vec3(0,0,0), Vec3(1,1,1)),Box(Vec3(0,0,0), Vec3(1,1,1)),Box(Vec3(0,0,0), Vec3(1,1,1))]
 def renderBoxes(seq):
     frames = sorted(seq.frames)
     numFrames = frames[-1]
     renderHitboxes = [0,0,0,0,0]
     renderHurtboxes = [0,0,0,0,0]
-    currentHitboxes = [Box(),Box(),Box(),Box(),Box()]
-    currentHurtboxes = [Box(),Box(),Box(),Box(),Box()]
+    currentHitboxes = [Box(Vec3(0,0,0), Vec3(1,1,1)),Box(Vec3(0,0,0), Vec3(1,1,1)),Box(Vec3(0,0,0), Vec3(1,1,1)),Box(Vec3(0,0,0), Vec3(1,1,1)),Box(Vec3(0,0,0), Vec3(1,1,1))]
+    currentHurtboxes = loadBaseHurtboxes(seq.chara)
     activeHitboxes = [0,0,0,0,0]
     activeHurtboxes = [1,0,0,0,0]
     for f in frames:
-        print(f)
+        #print("AAAA", seq.frames[f])
         baseimg = Image.open(os.path.join("SpriteRip", spriteGuids[seq.frames[f].spriteGuid]["file"] + ".png"))
         baseimg = baseimg.resize((baseimg.width*imgscale, baseimg.height*imgscale), resample=0)
         loadFrame(seq, f, currentHitboxes, currentHurtboxes, renderHitboxes, renderHurtboxes, activeHitboxes, activeHurtboxes)
@@ -253,19 +273,43 @@ def renderBoxes(seq):
         genBoxes(seq, f, currentHitboxes, currentHurtboxes, renderHitboxes, renderHurtboxes, activeHitboxes, activeHurtboxes, (baseimg.width, baseimg.height))
         #print (seq, f, currentHitboxes, currentHurtboxes, renderHitboxes, renderHurtboxes, activeHitboxes, activeHurtboxes, (baseimg.width, baseimg.height))
         renderFrame(seq, f, currentHitboxes, currentHurtboxes, renderHitboxes, renderHurtboxes, activeHitboxes, activeHurtboxes, baseimg)
+
 def addFrameData(aniClip):
     s = Sequence()
+    s.name = os.path.split(aniClip)[1].split(".")[0]
+    if "_" in s.name:
+        s.chara = s.name.split("_")[0]
     with open(aniClip, 'r') as f:
         anidata = yaml.load(f, Loader=yaml.BaseLoader)
         s.fps = float(anidata["AnimationClip"]["m_SampleRate"])
-        loadSpriteData(anidata, s)
-        loadBoxData(anidata, s)
-        loadActiveData(anidata, s)
+        try:
+            loadSpriteData(anidata, s)
+            loadBoxData(anidata, s)
+            loadActiveData(anidata, s)
+        except:
+            print("bad file:", aniClip)
+            return aniClip + "\n"
     renderBoxes(s)
 
 def dumpAll():
-    return
+    anims = os.listdir("AnimationClip")
+    badFiles = []
+    n = 1
+    for file in anims:
+        if "meta" not in file and "ayame" in file:
+            print(file)
+            badFile = addFrameData(os.path.join("AnimationClip", file))
+            if badFile:
+                badFiles.append(badFile)
+            n += 1
+        if n % 100 == 0:
+            print(n)
+    with open("bad_files.txt", 'w') as f:
+        f.writelines(badFiles)
 if __name__ == "__main__":
     if not os.path.exists("SpriteRipHitboxes"):
         os.makedirs("SpriteRipHitboxes")
-    addFrameData(sys.argv[1])
+    if "all" in sys.argv[1]:
+        dumpAll()
+    else:
+        addFrameData(sys.argv[1])
