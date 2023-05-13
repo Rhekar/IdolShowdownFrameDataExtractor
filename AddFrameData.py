@@ -250,6 +250,12 @@ def loadBaseHurtboxes(chara):
                 Box(Vec3(-0.182,-0.501,0), Vec3(0.1072033,0.2830588,1)),
                 Box(Vec3(0,0,0), Vec3(1,1,1)),
                 Box(Vec3(0,0,0), Vec3(1,1,1))]
+    if chara == "suisei":
+        return [Box(Vec3(0,-.5,0), Vec3(.35,1.2,1)),
+                Box(Vec3(0.01059997,-0.1145,0), Vec3(0.3275961,1.033168,1)),
+                Box(Vec3(0.01059997,-0.1145,0), Vec3(0.3275961,1.033168,1)),
+                Box(Vec3(0.192,-0.1145,0), Vec3(0.3275961,1.033168,1)),
+                Box(Vec3(0.01059997,-0.1145,0), Vec3(0.3275961,1.033168,1))]
     if chara == "fubuki":
         return [Box(Vec3(0,0,0), Vec3(1,1,1)),Box(Vec3(0.2171,-0.3205,0), Vec3(0.2477567,0.6513531,1)),Box(Vec3(0,0,0), Vec3(1,1,1)),Box(Vec3(0,0,0), Vec3(1,1,1)),Box(Vec3(0,0,0), Vec3(1,1,1))]
     
@@ -296,7 +302,7 @@ def dumpAll():
     badFiles = []
     n = 1
     for file in anims:
-        if "meta" not in file and "ayame" in file:
+        if "meta" not in file and "suisei" in file:
             print(file)
             badFile = addFrameData(os.path.join("AnimationClip", file))
             if badFile:
